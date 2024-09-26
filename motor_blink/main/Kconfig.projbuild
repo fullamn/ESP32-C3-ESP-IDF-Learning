@@ -46,4 +46,33 @@ menu "Example Configuration"
         help
             Define the blinking period in milliseconds.
 
+    choice BLINK_INCLUDE_MOTOR
+        prompt "Include the motor"
+        help
+            Select if motor should be included
+        config BLINK_MOTOR_INCLUDE
+            bool "Yes"
+        config BLINK_MOTOR_IGNORE
+            bool "No"
+    endchoice
+
+    config BLINK_MOTOR_GPIO_1
+        depends on BLINK_MOTOR_INCLUDE
+        int "Motor GPIO 1 number"
+        range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
+        default 0
+        help
+            GPIO number (IOxx) to blink on and off the LED.
+            Some GPIOs are used for other purposes (flash connections, etc.) and cannot be used to blink.
+
+    config BLINK_MOTOR_GPIO_2
+        depends on BLINK_MOTOR_INCLUDE
+        int "Motor GPIO 2 number"
+        range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
+        default 1
+        help
+            GPIO number (IOxx) to blink on and off the LED.
+            Some GPIOs are used for other purposes (flash connections, etc.) and cannot be used to blink.
+
+
 endmenu
