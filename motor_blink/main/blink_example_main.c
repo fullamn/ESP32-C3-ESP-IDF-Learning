@@ -112,11 +112,9 @@ static void configure_motor(void){
 static void blink_motor(void){
     gpio_set_level(MOTOR_PINS(s_motor_high_pin), s_motor_state);
 }
-#elif CONFIG_BLINK_MOTOR_IGNORE
+#else
     static void configure_motor(void){};
     static void blink_motor(void){};
-#else
-#error "Unsupported Motor option"
 #endif
 
 void app_main(void)
