@@ -8,6 +8,8 @@
   "idf.portWin": "COM7",
   "files.associations": {
     "cstdlib": "cpp",
-    "algorithm": "cpp"
+    "algorithm": "cpp",
+    "task.h": "c",
+    "esp_log.h": "c"
   }
 }
