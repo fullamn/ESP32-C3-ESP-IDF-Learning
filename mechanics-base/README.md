@@ -1,39 +1,32 @@
-| Supported Targets | ESP32 | ESP32-C2 | ESP32-C3 | ESP32-C6 | ESP32-H2 | ESP32-P4 | ESP32-S2 | ESP32-S3 |
-| ----------------- | ----- | -------- | -------- | -------- | -------- | -------- | -------- | -------- |
+| Supported Targets | ESP32 | ESP32-C3 | ESP32-C6 | ESP32-H2 | ESP32-P4 | ESP32-S2 | ESP32-S3 |
+| ----------------- | ----- | -------- | -------- | -------- | -------- | -------- | -------- |
 
-# Blink Example
+# Sigma Delta Modulation LED Example
 
 (See the README.md file in the upper level 'examples' directory for more information about examples.)
 
-This example demonstrates how to blink a LED by using the GPIO driver or using the [led_strip](https://components.espressif.com/component/espressif/led_strip) library if the LED is addressable e.g. [WS2812](https://cdn-shop.adafruit.com/datasheets/WS2812B.pdf). The `led_strip` library is installed via [component manager](main/idf_component.yml).
+This example uses the sigma-delta driver to generate modulated output on a GPIO. If you connect a LED or LCD backlight control to the output GPIO, you will see it slowly brightening and dimming.
 
-## How to Use Example
-
-Before project configuration and build, be sure to set the correct chip target using `idf.py set-target <chip_name>`.
+## How to use example
 
 ### Hardware Required
 
-* A development board with normal LED or addressable LED on-board (e.g., ESP32-S3-DevKitC, ESP32-C6-DevKitC etc.)
+* A development board with any supported Espressif SoC (e.g., ESP32-DevKitC, ESP-WROVER-KIT, etc.)
 * A USB cable for Power supply and programming
+* An LED and a resistor to limit the LED current. Connect them as below:
 
-See [Development Boards](https://www.espressif.com/en/products/devkits) for more information about it.
+```
+                                   330R            LED
+EXAMPLE_SIGMA_DELTA_GPIO_NUM +----/\/\/\----+------|>|-----+ GND
+```
 
-### Configure the Project
+### Configure the project
 
-Open the project configuration menu (`idf.py menuconfig`).
-
-In the `Example Configuration` menu:
-
-* Select the LED type in the `Blink LED type` option.
-  * Use `GPIO` for regular LED
-  * Use `LED strip` for addressable LED
-* If the LED type is `LED strip`, select the backend peripheral
-  * `RMT` is only available for ESP targets with RMT peripheral supported
-  * `SPI` is available for all ESP targets
-* Set the GPIO number used for the signal in the `Blink GPIO number` option.
-* Set the blinking period in the `Blink period in ms` option.
+You can change the GPIO number by [EXAMPLE_SIGMA_DELTA_GPIO_NUM](main/sdm_led_example_main.c).
 
 ### Build and Flash
+
+Build the project and flash it to the board, then run the monitor tool to view the serial output:
 
 Run `idf.py -p PORT flash monitor` to build, flash and monitor the project.
 
@@ -43,27 +36,19 @@ See the [Getting Started Guide](https://docs.espressif.com/projects/esp-idf/en/l
 
 ## Example Output
 
-As you run the example, you will see the LED blinking, according to the previously defined period. For the addressable LED, you can also change the LED color by setting the `led_strip_set_pixel(led_strip, 0, 16, 16, 16);` (LED Strip, Pixel Number, Red, Green, Blue) with values from 0 to 255 in the [source file](main/blink_example_main.c).
+Once the upload is complete and the board is reset, the program should start running. This is reported on the monitor as below:
 
-```text
-I (315) example: Example configured to blink addressable LED!
-I (325) example: Turning the LED OFF!
-I (1325) example: Turning the LED ON!
-I (2325) example: Turning the LED OFF!
-I (3325) example: Turning the LED ON!
-I (4325) example: Turning the LED OFF!
-I (5325) example: Turning the LED ON!
-I (6325) example: Turning the LED OFF!
-I (7325) example: Turning the LED ON!
-I (8325) example: Turning the LED OFF!
+```
+...
+I (245) cpu_start: Starting scheduler.
+I (249) example: Install sigma delta channel
+I (249) gpio: GPIO[0]| InputEn: 0| OutputEn: 1| OpenDrain: 0| Pullup: 1| Pulldown: 0| Intr:0
+I (259) example: Enable sigma delta channel
+I (259) example: Change duty cycle continuously
 ```
 
-Note: The color order could be different according to the LED model.
-
-The pixel number indicates the pixel position in the LED strip. For a single LED, use 0.
+Immediately after that the LED should start brightening and dimming.
 
 ## Troubleshooting
-
-* If the LED isn't blinking, check the GPIO or the LED type selection in the `Example Configuration` menu.
 
 For any technical queries, please open an [issue](https://github.com/espressif/esp-idf/issues) on GitHub. We will get back to you soon.
