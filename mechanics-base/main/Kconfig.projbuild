@@ -1,0 +1,26 @@
+menu "Mechanics Configuration"
+
+    orsource "$IDF_PATH/examples/common_components/env_caps/$IDF_TARGET/Kconfig.env_caps"
+
+    config MECHANICS_SDM_GPIO_NUM
+        int "Speed Pin (SDM)"
+        default 0
+        range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
+        help
+            GPIO pin used to transmit the SDM signal to motor for speed control.
+
+    config MECHANICS_DIR_GPIO_NUM
+        int "Direction Pin (GPIO)"
+        default 1
+        range ENV_GPIO_RANGE_MIN ENV_GPIO_OUT_RANGE_MAX
+        help
+            GPIO pin used to transmit a TTL signal to motor for direction control.
+
+    config MECHANICS_DEFAULT_SDM_DUTY
+        int "Speed Percentage (%)"
+        default 75
+        range 0 100
+        help
+            Default SDM duty cycle to control the motor's speed.
+
+endmenu
