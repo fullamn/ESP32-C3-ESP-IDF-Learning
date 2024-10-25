@@ -1,4 +1,4 @@
-menu "Mechanics Configuration"
+menu "Main Configuration"
 
     orsource "$IDF_PATH/examples/common_components/env_caps/$IDF_TARGET/Kconfig.env_caps"
 
@@ -22,5 +22,12 @@ menu "Mechanics Configuration"
         range 0 100
         help
             Default SDM duty cycle to control the motor's speed.
+
+    config MECHANICS_CW_LVL
+        int  "TTL Level for Clockwise Direction"
+        help
+            Level to set direction control pin to turn clockwise.
+        default 0
+        range 0 1
 
 endmenu

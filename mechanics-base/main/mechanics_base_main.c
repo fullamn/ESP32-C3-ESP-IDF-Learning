@@ -6,68 +6,47 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "esp_err.h"
 #include "esp_log.h"
+#include "esp_check.h"
 #include "driver/sdm.h"
 #include "driver/gpio.h"
 
 #include "sdkconfig.h"
 
+#include "autoblinds_mechanics.h"
+
 #define DIR_GPIO_NUM CONFIG_MECHANICS_DIR_GPIO_NUM
 #define SPD_GPIO_NUM CONFIG_MECHANICS_SDM_GPIO_NUM
-#define SDM_DUTY_MAX(dir) (dir? INT8_MIN:INT8_MAX) 
-#define SDM_DUTY_MIN(dir) (dir? -110:87)
-#define SDM_DUTY_OFF(dir) (dir? INT8_MAX:INT8_MIN)
-
 
 static const char *TAG = "mechanics_base";
-static uint8_t motor_dir = 0;
-
-int8_t calculate_sdm_density(int8_t dir, int8_t duty){
-    int8_t density = (int8_t)((SDM_DUTY_MAX(dir)-SDM_DUTY_MIN(dir))*(duty/100.0)+SDM_DUTY_MIN(dir));
-    return density;
-}
-
-int8_t get_default_sdm_density(int8_t dir){
-    return calculate_sdm_density(dir, CONFIG_MECHANICS_DEFAULT_SDM_DUTY);
-}
 
 void app_main(void)
 {
-
-    ESP_LOGI(TAG, "Set up direction GPIO");
-    gpio_reset_pin(DIR_GPIO_NUM);
-    gpio_set_direction(DIR_GPIO_NUM, GPIO_MODE_OUTPUT);
-    gpio_set_pull_mode(DIR_GPIO_NUM, GPIO_PULLDOWN_ONLY);
-    gpio_set_level(DIR_GPIO_NUM, motor_dir);
-
-    ESP_LOGI(TAG, "Install speed sigma delta channel");
-    sdm_channel_handle_t sdm_chan = NULL;
-    sdm_config_t config = {
-        .clk_src = SDM_CLK_SRC_DEFAULT,
-        .gpio_num = SPD_GPIO_NUM,
-        .sample_rate_hz = 1 * 1000 * 1000, // 1MHz sample rate
-    };
-    ESP_ERROR_CHECK(sdm_new_channel(&config, &sdm_chan));
-
-    ESP_LOGI(TAG, "Enable sigma delta channel");
-    ESP_ERROR_CHECK(sdm_channel_enable(sdm_chan));
-    ESP_ERROR_CHECK(sdm_channel_set_pulse_density(sdm_chan, INT8_MIN)); // INT_MIN is a zero value for the pulse
-
-    ESP_LOGI(TAG, "Begin scaling");
+    // Setup motor
+    ESP_LOGI(TAG, "Set up motor struct");
+    mechanics_bdc_motor_handle_t motor = NULL;
+    mechanics_bdc_motor_config_t config = {
+        .cw_lvl = CONFIG_MECHANICS_CW_LVL,
+        .default_duty = CONFIG_MECHANICS_DEFAULT_SDM_DUTY,
+        .dir_pin = DIR_GPIO_NUM,
+        .spd_pin = SPD_GPIO_NUM};
+    mechanics_new_bdc_motor(&config, &motor);
+    uint8_t step = 5;
+    uint8_t duty = 5;
     while (1)
     {
-        int8_t sdm_density = get_default_sdm_density(motor_dir);
-        ESP_LOGI(TAG, "Start at %i", sdm_density);
-        ESP_ERROR_CHECK(sdm_channel_set_pulse_density(sdm_chan, sdm_density));
+        ESP_LOGI(TAG, "Run CW at %i", duty);
+        mechanics_run_motor_cw_timed(motor, duty, 2000);
+        ESP_LOGI(TAG, "STOP");
         vTaskDelay(pdMS_TO_TICKS(2000));
-        ESP_LOGI(TAG, "Pause");
-        ESP_ERROR_CHECK(sdm_channel_set_pulse_density(sdm_chan, SDM_DUTY_OFF(motor_dir)));
+        ESP_LOGI(TAG, "Run CCW at %i", duty);
+        mechanics_run_motor_ccw_timed(motor, duty, 2000);
+        ESP_LOGI(TAG, "STOP");
         vTaskDelay(pdMS_TO_TICKS(2000));
-
-        ESP_LOGI(TAG, "Flipping");
-        motor_dir = !motor_dir;
-        gpio_set_level(DIR_GPIO_NUM,motor_dir);
-        ESP_ERROR_CHECK(sdm_channel_set_pulse_density(sdm_chan, SDM_DUTY_OFF(motor_dir)));
-
+        if(duty==100||duty==0){
+            step *= -1;
+        }
+        duty += step;
     }
 }
