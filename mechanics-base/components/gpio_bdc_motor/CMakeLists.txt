@@ -1,3 +1,3 @@
-idf_component_register(SRCS "autoblinds_mechanics.c"
+idf_component_register(SRCS "bdc_ttl_motor.c"
                        INCLUDE_DIRS "."
                        REQUIRES driver)

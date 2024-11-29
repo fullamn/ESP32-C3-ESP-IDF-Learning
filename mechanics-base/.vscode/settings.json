@@ -5,5 +5,15 @@
     "board/esp32c3-builtin.cfg"
   ],
   "idf.portWin": "COM7",
-  "idf.flashType": "UART"
+  "idf.flashType": "UART",
+  "files.associations": {
+    "cstdint": "c",
+    "cstdlib": "c",
+    "ratio": "c",
+    "sdkconfig.h": "c",
+    "sdm_bdc_motor.h": "c",
+    "freertos.h": "c",
+    "esp_log.h": "c",
+    "esp_check.h": "c"
+  }
 }

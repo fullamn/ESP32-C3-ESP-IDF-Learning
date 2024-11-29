@@ -8,13 +8,13 @@
 
 #include "sdkconfig.h"
 
-#include "autoblinds_mechanics.h"
+#include "bdc_sdm_motor.h"
 
 #define SDM_DUTY_MAX(dir) (dir ? INT8_MIN : INT8_MAX)
 #define SDM_DUTY_MIN(dir) (dir ? -76 : 80)
 #define SDM_DUTY_OFF(dir) (dir ? INT8_MAX : INT8_MIN)
 
-static const char *TAG = "autoblinds_mechanics";
+static const char *TAG = "bdc_sdm_motor";
 
 int8_t calculate_sdm_density(int32_t dir, int8_t duty)
 {
@@ -22,15 +22,15 @@ int8_t calculate_sdm_density(int32_t dir, int8_t duty)
     return density;
 }
 
-esp_err_t mechanics_new_bdc_motor(const mechanics_bdc_motor_config_t *config, mechanics_bdc_motor_handle_t *ret_motor)
+esp_err_t mechanics_new_bdc_sdm_motor(const mechanics_bdc_sdm_motor_config_t *config, mechanics_bdc_sdm_motor_handle_t *ret_sdm_motor)
 {
     esp_err_t ret = ESP_OK;
-    mechanics_bdc_motor_t *motor = NULL;
-    ESP_GOTO_ON_FALSE(config && ret_motor, ESP_ERR_INVALID_ARG, err, TAG, "invalid argument");
+    mechanics_bdc_sdm_motor_t *motor = NULL;
+    ESP_GOTO_ON_FALSE(config && ret_sdm_motor, ESP_ERR_INVALID_ARG, err, TAG, "invalid argument");
     ESP_GOTO_ON_FALSE(GPIO_IS_VALID_OUTPUT_GPIO(config->dir_pin), ESP_ERR_INVALID_ARG, err, TAG, "invalid GPIO number");
 
     // get memory for motor struct
-    motor = heap_caps_calloc(1, sizeof(mechanics_bdc_motor_t), MALLOC_CAP_DEFAULT);
+    motor = heap_caps_calloc(1, sizeof(mechanics_bdc_sdm_motor_t), MALLOC_CAP_DEFAULT);
     ESP_GOTO_ON_FALSE(motor, ESP_ERR_NO_MEM, err, TAG, "no mem for motor");
 
     // setup gpio
@@ -59,7 +59,7 @@ esp_err_t mechanics_new_bdc_motor(const mechanics_bdc_motor_config_t *config, me
     // init rest of motor members
     motor->cw_lvl = config->cw_lvl;
 
-    *ret_motor = motor;
+    *ret_sdm_motor = motor;
     return ESP_OK;
 
 err:
@@ -70,7 +70,7 @@ err:
     return ret;
 }
 
-esp_err_t mechanics_run_motor_cw(mechanics_bdc_motor_handle_t motor, uint8_t duty)
+esp_err_t mechanics_run_sdm_motor_clw_variable_spd(mechanics_bdc_sdm_motor_handle_t motor, uint8_t duty)
 {
     ESP_RETURN_ON_FALSE(motor, ESP_ERR_INVALID_ARG, TAG, "invalid argument");
     ESP_RETURN_ON_ERROR(gpio_set_level(motor->dir_pin, motor->cw_lvl), TAG, "set GPIO to CW level failed");
@@ -78,7 +78,7 @@ esp_err_t mechanics_run_motor_cw(mechanics_bdc_motor_handle_t motor, uint8_t dut
     return ESP_OK;
 }
 
-esp_err_t mechanics_run_motor_ccw(mechanics_bdc_motor_handle_t motor, uint8_t duty)
+esp_err_t mechanics_run_sdm_motor_ccw_variable_spd(mechanics_bdc_sdm_motor_handle_t motor, uint8_t duty)
 {
     ESP_RETURN_ON_FALSE(motor, ESP_ERR_INVALID_ARG, TAG, "invalid argument");
     ESP_RETURN_ON_ERROR(gpio_set_level(motor->dir_pin, !(motor->cw_lvl)), TAG, "set GPIO to CCW level failed");
@@ -86,7 +86,7 @@ esp_err_t mechanics_run_motor_ccw(mechanics_bdc_motor_handle_t motor, uint8_t du
     return ESP_OK;
 }
 
-esp_err_t mechanics_stop_motor(mechanics_bdc_motor_handle_t motor)
+esp_err_t mechanics_stop_sdm_motor(mechanics_bdc_sdm_motor_handle_t motor)
 {
     ESP_RETURN_ON_FALSE(motor, ESP_ERR_INVALID_ARG, TAG, "invalid argument");
     ESP_RETURN_ON_ERROR(gpio_set_level(motor->dir_pin, 0), TAG, "set GPIO level to stop motor failed");
@@ -94,18 +94,34 @@ esp_err_t mechanics_stop_motor(mechanics_bdc_motor_handle_t motor)
     return ESP_OK;
 }
 
-esp_err_t mechanics_run_motor_cw_timed(mechanics_bdc_motor_handle_t motor, uint8_t duty, uint32_t msDelay)
+esp_err_t mechanics_run_sdm_motor_clw_variable_spd_timed(mechanics_bdc_sdm_motor_handle_t motor, uint8_t duty, uint32_t msDelay)
 {
-    mechanics_run_motor_cw(motor, duty);
+    mechanics_run_sdm_motor_clw_variable_spd(motor, duty);
     vTaskDelay(pdMS_TO_TICKS(msDelay));
-    mechanics_stop_motor(motor);
+    mechanics_stop_sdm_motor(motor);
     return ESP_OK;
 }
 
-esp_err_t mechanics_run_motor_ccw_timed(mechanics_bdc_motor_handle_t motor, uint8_t duty, uint32_t msDelay)
+esp_err_t mechanics_run_sdm_motor_ccw_variable_spd_timed(mechanics_bdc_sdm_motor_handle_t motor, uint8_t duty, uint32_t msDelay)
 {
-    mechanics_run_motor_ccw(motor, duty);
+    mechanics_run_sdm_motor_ccw_variable_spd(motor, duty);
     vTaskDelay(pdMS_TO_TICKS(msDelay));
-    mechanics_stop_motor(motor);
+    mechanics_stop_sdm_motor(motor);
+    return ESP_OK;
+}
+
+esp_err_t mechanics_run_sdm_motor_clw_default_spd_timed(mechanics_bdc_sdm_motor_handle_t motor, uint32_t msDelay)
+{
+    mechanics_run_sdm_motor_clw_variable_spd(motor, motor->default_duty);
+    vTaskDelay(pdMS_TO_TICKS(msDelay));
+    mechanics_stop_sdm_motor(motor);
+    return ESP_OK;
+}
+
+esp_err_t mechanics_run_sdm_motor_ccw_default_spd_timed(mechanics_bdc_sdm_motor_handle_t motor, uint32_t msDelay)
+{
+    mechanics_run_sdm_motor_ccw_variable_spd(motor, motor->default_duty);
+    vTaskDelay(pdMS_TO_TICKS(msDelay));
+    mechanics_stop_sdm_motor(motor);
     return ESP_OK;
 }
